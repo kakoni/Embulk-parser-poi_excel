@@ -10,9 +10,9 @@ import java.text.ParseException;
 import java.util.Arrays;
 import java.util.List;
 
-import org.embulk.parser.EmbulkPluginTester;
-import org.embulk.parser.EmbulkTestOutputPlugin.OutputRecord;
-import org.embulk.parser.EmbulkTestParserConfig;
+import com.hishidama.embulk.tester.EmbulkPluginTester;
+import com.hishidama.embulk.tester.EmbulkTestOutputPlugin;
+import com.hishidama.embulk.tester.EmbulkTestParserConfig;
 import org.junit.experimental.theories.DataPoints;
 import org.junit.experimental.theories.Theories;
 import org.junit.experimental.theories.Theory;
@@ -35,7 +35,7 @@ public class TestPoiExcelParserPlugin_cellComment {
 			parser.addColumn("comment", "string").set("value", "cell_comment.string");
 
 			URL inFile = getClass().getResource(excelFile);
-			List<OutputRecord> result = tester.runParser(inFile, parser);
+			List<EmbulkTestOutputPlugin.OutputRecord> result = tester.runParser(inFile, parser);
 
 			assertThat(result.size(), is(2));
 			check1(result, 0, "hishidama", "hishidama:\nmy comment");
@@ -43,8 +43,8 @@ public class TestPoiExcelParserPlugin_cellComment {
 		}
 	}
 
-	private void check1(List<OutputRecord> result, int index, String author, String comment) {
-		OutputRecord record = result.get(index);
+	private void check1(List<EmbulkTestOutputPlugin.OutputRecord> result, int index, String author, String comment) {
+		EmbulkTestOutputPlugin.OutputRecord record = result.get(index);
 		// System.out.println(record);
 		assertThat(record.getAsString("comment"), is(comment));
 		assertThat(record.getAsString("author"), is(author));
@@ -60,7 +60,7 @@ public class TestPoiExcelParserPlugin_cellComment {
 			parser.addColumn("comment", "string").set("value", "cell_comment");
 
 			URL inFile = getClass().getResource(excelFile);
-			List<OutputRecord> result = tester.runParser(inFile, parser);
+			List<EmbulkTestOutputPlugin.OutputRecord> result = tester.runParser(inFile, parser);
 
 			assertThat(result.size(), is(2));
 			check2(result, 0, "hishidama", "hishidama:\\nmy comment");
@@ -68,8 +68,8 @@ public class TestPoiExcelParserPlugin_cellComment {
 		}
 	}
 
-	private void check2(List<OutputRecord> result, int index, String author, String comment) {
-		OutputRecord record = result.get(index);
+	private void check2(List<EmbulkTestOutputPlugin.OutputRecord> result, int index, String author, String comment) {
+		EmbulkTestOutputPlugin.OutputRecord record = result.get(index);
 		// System.out.println(record);
 		String s = record.getAsString("comment");
 		if (author == null && comment == null) {
@@ -96,7 +96,7 @@ public class TestPoiExcelParserPlugin_cellComment {
 					.set("attribute_name", Arrays.asList("author", "string"));
 
 			URL inFile = getClass().getResource(excelFile);
-			List<OutputRecord> result = tester.runParser(inFile, parser);
+			List<EmbulkTestOutputPlugin.OutputRecord> result = tester.runParser(inFile, parser);
 
 			assertThat(result.size(), is(2));
 			check2(result, 0, "hishidama", "hishidama:\\nmy comment");

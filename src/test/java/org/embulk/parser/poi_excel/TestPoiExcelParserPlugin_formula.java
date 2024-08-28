@@ -8,10 +8,11 @@ import java.text.ParseException;
 import java.util.Arrays;
 import java.util.List;
 
+import com.hishidama.embulk.tester.EmbulkPluginTester;
+import com.hishidama.embulk.tester.EmbulkTestOutputPlugin;
+import com.hishidama.embulk.tester.EmbulkTestParserConfig;
 import org.embulk.config.ConfigSource;
-import org.embulk.parser.EmbulkPluginTester;
-import org.embulk.parser.EmbulkTestOutputPlugin.OutputRecord;
-import org.embulk.parser.EmbulkTestParserConfig;
+
 import org.junit.experimental.theories.DataPoints;
 import org.junit.experimental.theories.Theories;
 import org.junit.experimental.theories.Theory;
@@ -34,7 +35,7 @@ public class TestPoiExcelParserPlugin_formula {
 			parser.addColumn("text", "string").set("formula_handling", "cashed_value");
 
 			URL inFile = getClass().getResource(excelFile);
-			List<OutputRecord> result = tester.runParser(inFile, parser);
+			List<EmbulkTestOutputPlugin.OutputRecord> result = tester.runParser(inFile, parser);
 
 			assertThat(result.size(), is(2));
 			assertThat(result.get(0).getAsString("text"), is("boolean"));
@@ -53,7 +54,7 @@ public class TestPoiExcelParserPlugin_formula {
 			parser.addColumn("text", "string").set("formula_handling", "evaluate");
 
 			URL inFile = getClass().getResource(excelFile);
-			List<OutputRecord> result = tester.runParser(inFile, parser);
+			List<EmbulkTestOutputPlugin.OutputRecord> result = tester.runParser(inFile, parser);
 
 			assertThat(result.size(), is(2));
 			assertThat(result.get(0).getAsString("text"), is("boolean"));
@@ -80,7 +81,7 @@ public class TestPoiExcelParserPlugin_formula {
 			parser.addColumn("text", "string");
 
 			URL inFile = getClass().getResource(excelFile);
-			List<OutputRecord> result = tester.runParser(inFile, parser);
+			List<EmbulkTestOutputPlugin.OutputRecord> result = tester.runParser(inFile, parser);
 
 			assertThat(result.size(), is(2));
 			assertThat(result.get(0).getAsString("text"), is("test3-a1"));

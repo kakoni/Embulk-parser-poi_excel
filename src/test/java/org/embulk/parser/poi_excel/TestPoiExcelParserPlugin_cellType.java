@@ -8,10 +8,10 @@ import java.text.ParseException;
 import java.util.Arrays;
 import java.util.List;
 
+import com.hishidama.embulk.tester.EmbulkPluginTester;
+import com.hishidama.embulk.tester.EmbulkTestOutputPlugin;
+import com.hishidama.embulk.tester.EmbulkTestParserConfig;
 import org.apache.poi.ss.usermodel.CellType;
-import org.embulk.parser.EmbulkPluginTester;
-import org.embulk.parser.EmbulkTestOutputPlugin.OutputRecord;
-import org.embulk.parser.EmbulkTestParserConfig;
 import org.junit.experimental.theories.DataPoints;
 import org.junit.experimental.theories.Theories;
 import org.junit.experimental.theories.Theory;
@@ -35,7 +35,7 @@ public class TestPoiExcelParserPlugin_cellType {
 			parser.addColumn("string", "string").set("column_number", "A").set("value", "cell_type");
 
 			URL inFile = getClass().getResource(excelFile);
-			List<OutputRecord> result = tester.runParser(inFile, parser);
+			List<EmbulkTestOutputPlugin.OutputRecord> result = tester.runParser(inFile, parser);
 
 			assertThat(result.size(), is(5));
 			check1(result, 0, CellType.NUMERIC, "NUMERIC");
@@ -58,7 +58,7 @@ public class TestPoiExcelParserPlugin_cellType {
 			parser.addColumn("string", "string").set("column_number", "A").set("value", "cell_cached_type");
 
 			URL inFile = getClass().getResource(excelFile);
-			List<OutputRecord> result = tester.runParser(inFile, parser);
+			List<EmbulkTestOutputPlugin.OutputRecord> result = tester.runParser(inFile, parser);
 
 			assertThat(result.size(), is(5));
 			check1(result, 0, CellType.NUMERIC, "NUMERIC");
@@ -70,8 +70,8 @@ public class TestPoiExcelParserPlugin_cellType {
 	}
 
 	@SuppressWarnings("deprecation")
-	private void check1(List<OutputRecord> result, int index, CellType cellType, String s) throws ParseException {
-		OutputRecord r = result.get(index);
+	private void check1(List<EmbulkTestOutputPlugin.OutputRecord> result, int index, CellType cellType, String s) throws ParseException {
+		EmbulkTestOutputPlugin.OutputRecord r = result.get(index);
 		// System.out.println(r);
 		assertThat(r.getAsLong("long"), is((long) cellType.getCode()));
 		assertThat(r.getAsString("string"), is(s));

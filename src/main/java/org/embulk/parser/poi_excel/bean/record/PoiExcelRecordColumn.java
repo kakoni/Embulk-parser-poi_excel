@@ -4,11 +4,11 @@ import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.embulk.parser.poi_excel.bean.PoiExcelColumnBean;
-import org.embulk.spi.Exec;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class PoiExcelRecordColumn extends PoiExcelRecord {
-	private final Logger log = Exec.getLogger(getClass());
+	private static final Logger logger = LoggerFactory.getLogger(PoiExcelRecordColumn.class);
 
 	private int maxColumnIndex;
 	private int currentColumnIndex;
@@ -29,8 +29,8 @@ public class PoiExcelRecordColumn extends PoiExcelRecord {
 		this.currentColumnIndex = maxColumnIndex;
 		for (int i = minColumnIndex; i < maxColumnIndex; i++) {
 			if (i < skipHeaderLines) {
-				if (log.isDebugEnabled()) {
-					log.debug("column({}) skipped", i);
+				if (logger.isDebugEnabled()) {
+					logger.debug("column({}) skipped", i);
 				}
 				continue;
 			}
@@ -52,8 +52,8 @@ public class PoiExcelRecordColumn extends PoiExcelRecord {
 
 	@Override
 	protected void logStartEnd(String part) {
-		if (log.isDebugEnabled()) {
-			log.debug("column({}) {}", currentColumnIndex, part);
+		if (logger.isDebugEnabled()) {
+			logger.debug("column({}) {}", currentColumnIndex, part);
 		}
 	}
 

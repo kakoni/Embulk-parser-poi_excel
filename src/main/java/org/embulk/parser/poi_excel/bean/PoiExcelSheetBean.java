@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
+
 
 import org.apache.poi.ss.usermodel.Sheet;
 import org.embulk.parser.poi_excel.PoiExcelParserPlugin.ColumnOptionTask;
@@ -13,10 +15,10 @@ import org.embulk.parser.poi_excel.PoiExcelParserPlugin.SheetCommonOptionTask;
 import org.embulk.parser.poi_excel.PoiExcelParserPlugin.SheetOptionTask;
 import org.embulk.parser.poi_excel.bean.record.RecordType;
 import org.embulk.spi.Column;
-import org.embulk.spi.ColumnConfig;
 import org.embulk.spi.Schema;
+import org.embulk.util.config.units.ColumnConfig;
 
-import com.google.common.base.Optional;
+import static org.embulk.parser.poi_excel.PoiExcelParserPlugin.getConfigMapper;
 
 public class PoiExcelSheetBean {
 
@@ -71,7 +73,7 @@ public class PoiExcelSheetBean {
 		for (Column column : schema.getColumns()) {
 			String name = column.getName();
 			ColumnConfig c = list.get(column.getIndex());
-			ColumnOptionTask t = c.getOption().loadConfig(ColumnOptionTask.class);
+			ColumnOptionTask t = getConfigMapper().map(c.getOption(), ColumnOptionTask.class);
 			PoiExcelColumnBean bean = new PoiExcelColumnBean(this, column, t, map.get(name));
 			columnBeanList.add(bean);
 		}

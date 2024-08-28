@@ -8,9 +8,9 @@ import java.net.URL;
 import java.text.ParseException;
 import java.util.List;
 
-import org.embulk.parser.EmbulkPluginTester;
-import org.embulk.parser.EmbulkTestOutputPlugin.OutputRecord;
-import org.embulk.parser.EmbulkTestParserConfig;
+import com.hishidama.embulk.tester.EmbulkPluginTester;
+import com.hishidama.embulk.tester.EmbulkTestOutputPlugin;
+import com.hishidama.embulk.tester.EmbulkTestParserConfig;
 import org.junit.experimental.theories.DataPoints;
 import org.junit.experimental.theories.Theories;
 import org.junit.experimental.theories.Theory;
@@ -33,7 +33,7 @@ public class TestPoiExcelParserPlugin_columnNumber {
 			parser.addColumn("text", "string").set("column_number", "D");
 
 			URL inFile = getClass().getResource(excelFile);
-			List<OutputRecord> result = tester.runParser(inFile, parser);
+			List<EmbulkTestOutputPlugin.OutputRecord> result = tester.runParser(inFile, parser);
 
 			assertThat(result.size(), is(7));
 			assertThat(result.get(0).getAsString("text"), is("abc"));
@@ -58,7 +58,7 @@ public class TestPoiExcelParserPlugin_columnNumber {
 			parser.addColumn("double", "double");
 
 			URL inFile = getClass().getResource(excelFile);
-			List<OutputRecord> result = tester.runParser(inFile, parser);
+			List<EmbulkTestOutputPlugin.OutputRecord> result = tester.runParser(inFile, parser);
 
 			assertThat(result.size(), is(7));
 			check_int(result, 0, 123L, 123.4d);
@@ -71,8 +71,8 @@ public class TestPoiExcelParserPlugin_columnNumber {
 		}
 	}
 
-	private void check_int(List<OutputRecord> result, int index, Long l, Double d) throws ParseException {
-		OutputRecord r = result.get(index);
+	private void check_int(List<EmbulkTestOutputPlugin.OutputRecord> result, int index, Long l, Double d) throws ParseException {
+		EmbulkTestOutputPlugin.OutputRecord r = result.get(index);
 		// System.out.println(r);
 		assertThat(r.getAsLong("long"), is(l));
 		assertThat(r.getAsDouble("double"), is(d));
@@ -93,7 +93,7 @@ public class TestPoiExcelParserPlugin_columnNumber {
 			parser.addColumn("long3", "long").set("column_number", "-");
 
 			URL inFile = getClass().getResource(excelFile);
-			List<OutputRecord> result = tester.runParser(inFile, parser);
+			List<EmbulkTestOutputPlugin.OutputRecord> result = tester.runParser(inFile, parser);
 
 			assertThat(result.size(), is(7));
 			check_move(result, 0, 123L, 123.4d);
@@ -106,8 +106,8 @@ public class TestPoiExcelParserPlugin_columnNumber {
 		}
 	}
 
-	private void check_move(List<OutputRecord> result, int index, Long l, Double d) throws ParseException {
-		OutputRecord r = result.get(index);
+	private void check_move(List<EmbulkTestOutputPlugin.OutputRecord> result, int index, Long l, Double d) throws ParseException {
+		EmbulkTestOutputPlugin.OutputRecord r = result.get(index);
 		// System.out.println(r);
 		assertThat(r.getAsLong("long1"), is(l));
 		assertThat(r.getAsLong("long2"), is(l));
@@ -131,7 +131,7 @@ public class TestPoiExcelParserPlugin_columnNumber {
 			parser.addColumn("long3", "long").set("column_number", "-2");
 
 			URL inFile = getClass().getResource(excelFile);
-			List<OutputRecord> result = tester.runParser(inFile, parser);
+			List<EmbulkTestOutputPlugin.OutputRecord> result = tester.runParser(inFile, parser);
 
 			assertThat(result.size(), is(7));
 			check_move2(result, 0, 123L, "abc");
@@ -144,8 +144,8 @@ public class TestPoiExcelParserPlugin_columnNumber {
 		}
 	}
 
-	private void check_move2(List<OutputRecord> result, int index, Long l, String s) throws ParseException {
-		OutputRecord r = result.get(index);
+	private void check_move2(List<EmbulkTestOutputPlugin.OutputRecord> result, int index, Long l, String s) throws ParseException {
+		EmbulkTestOutputPlugin.OutputRecord r = result.get(index);
 		// System.out.println(r);
 		assertThat(r.getAsLong("long1"), is(l));
 		assertThat(r.getAsLong("long2"), is(l));
@@ -168,7 +168,7 @@ public class TestPoiExcelParserPlugin_columnNumber {
 			parser.addColumn("boolean1", "boolean").set("column_number", "-long1");
 
 			URL inFile = getClass().getResource(excelFile);
-			List<OutputRecord> result = tester.runParser(inFile, parser);
+			List<EmbulkTestOutputPlugin.OutputRecord> result = tester.runParser(inFile, parser);
 
 			assertThat(result.size(), is(7));
 			check_moveName(result, 0, true, 123L, 123.4d);
@@ -181,9 +181,9 @@ public class TestPoiExcelParserPlugin_columnNumber {
 		}
 	}
 
-	private void check_moveName(List<OutputRecord> result, int index, Boolean b, Long l, Double d)
+	private void check_moveName(List<EmbulkTestOutputPlugin.OutputRecord> result, int index, Boolean b, Long l, Double d)
 			throws ParseException {
-		OutputRecord r = result.get(index);
+		EmbulkTestOutputPlugin.OutputRecord r = result.get(index);
 		// System.out.println(r);
 		assertThat(r.getAsLong("long1"), is(l));
 		assertThat(r.getAsLong("long2"), is(l));

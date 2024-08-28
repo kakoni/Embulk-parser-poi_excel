@@ -4,6 +4,7 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import org.apache.poi.ss.util.CellReference;
 import org.embulk.config.ConfigException;
@@ -16,8 +17,6 @@ import org.embulk.parser.poi_excel.bean.util.PoiExcelCellAddress;
 import org.embulk.parser.poi_excel.bean.util.SearchMergedCell;
 import org.embulk.parser.poi_excel.visitor.util.MergedRegionFinder;
 import org.embulk.spi.Column;
-
-import com.google.common.base.Optional;
 
 public class PoiExcelColumnBean {
 
@@ -114,7 +113,7 @@ public class PoiExcelColumnBean {
 				return option;
 			}
 		}
-		return Optional.absent();
+		return Optional.empty();
 	}
 
 	public Optional<String> getRowNumber() {
@@ -124,7 +123,7 @@ public class PoiExcelColumnBean {
 				return option;
 			}
 		}
-		return Optional.absent();
+		return Optional.empty();
 	}
 
 	private Optional<PoiExcelCellAddress> cellAddress;
@@ -133,7 +132,7 @@ public class PoiExcelColumnBean {
 		if (cellAddress == null) {
 			this.cellAddress = initializeCellAddress();
 		}
-		return cellAddress.orNull();
+		return cellAddress.orElse(null);
 	}
 
 	protected Optional<PoiExcelCellAddress> initializeCellAddress() {
@@ -144,7 +143,7 @@ public class PoiExcelColumnBean {
 				return Optional.of(new PoiExcelCellAddress(ref));
 			}
 		}
-		return Optional.absent();
+		return Optional.empty();
 	}
 
 	public void setCellAddress(CellReference ref) {
@@ -221,7 +220,7 @@ public class PoiExcelColumnBean {
 		protected Optional<ErrorStrategy> getTaskValue(ColumnCommonOptionTask task) {
 			Optional<String> option = getStringValue(task);
 			if (!option.isPresent()) {
-				return Optional.absent();
+				return Optional.empty();
 			}
 			String value = option.get();
 			if ("null".equalsIgnoreCase(value)) {
@@ -262,7 +261,7 @@ public class PoiExcelColumnBean {
 			if (task instanceof ColumnOptionTask) {
 				return ((ColumnOptionTask) task).getAttributeName();
 			}
-			return Optional.absent();
+			return Optional.empty();
 		}
 
 		@Override
@@ -297,10 +296,10 @@ public class PoiExcelColumnBean {
 		@Override
 		protected Optional<SearchMergedCell> getTaskValue(ColumnCommonOptionTask task) {
 			Optional<String> option = task.getSearchMergedCell();
-			String value = option.or("null").trim();
+			String value = option.orElse("null").trim();
 			switch (value.toLowerCase()) {
 			case "null":
-				return Optional.absent();
+				return Optional.empty();
 			case "true": // compatibility ver 0.1.7
 				return Optional.of(getDefaultValue());
 			case "false": // compatibility ver 0.1.7
@@ -348,9 +347,9 @@ public class PoiExcelColumnBean {
 		@Override
 		protected Optional<FormulaHandling> getTaskValue(ColumnCommonOptionTask task) {
 			Optional<String> option = task.getFormulaHandling();
-			String value = option.or("null");
+			String value = option.orElse("null");
 			if ("null".equalsIgnoreCase(value)) {
-				return Optional.absent();
+				return Optional.empty();
 			}
 			try {
 				return Optional.of(FormulaHandling.valueOf(value.trim().toUpperCase()));

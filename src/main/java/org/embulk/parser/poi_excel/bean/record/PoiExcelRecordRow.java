@@ -4,12 +4,14 @@ import java.util.Iterator;
 
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
+import org.embulk.parser.poi_excel.PoiExcelParserPlugin;
 import org.embulk.parser.poi_excel.bean.PoiExcelColumnBean;
 import org.embulk.spi.Exec;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class PoiExcelRecordRow extends PoiExcelRecord {
-	private final Logger log = Exec.getLogger(getClass());
+	private static final Logger logger = LoggerFactory.getLogger(PoiExcelRecordRow.class);
 
 	private Iterator<Row> rowIterator;
 	private Row currentRow;
@@ -23,8 +25,8 @@ public class PoiExcelRecordRow extends PoiExcelRecord {
 
 			int rowIndex = row.getRowNum();
 			if (rowIndex < skipHeaderLines) {
-				if (log.isDebugEnabled()) {
-					log.debug("row({}) skipped", rowIndex);
+				if (logger.isDebugEnabled()) {
+					logger.debug("row({}) skipped", rowIndex);
 				}
 				continue;
 			}
@@ -51,8 +53,8 @@ public class PoiExcelRecordRow extends PoiExcelRecord {
 	@Override
 	protected void logStartEnd(String part) {
 		assert currentRow != null;
-		if (log.isDebugEnabled()) {
-			log.debug("row({}) {}", currentRow.getRowNum(), part);
+		if (logger.isDebugEnabled()) {
+			logger.debug("row({}) {}", currentRow.getRowNum(), part);
 		}
 	}
 

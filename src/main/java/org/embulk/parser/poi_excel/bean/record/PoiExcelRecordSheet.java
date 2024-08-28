@@ -2,11 +2,13 @@ package org.embulk.parser.poi_excel.bean.record;
 
 import org.apache.poi.ss.usermodel.Cell;
 import org.embulk.parser.poi_excel.bean.PoiExcelColumnBean;
+import org.embulk.parser.poi_excel.bean.PoiExcelColumnIndex;
 import org.embulk.spi.Exec;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class PoiExcelRecordSheet extends PoiExcelRecord {
-	private final Logger log = Exec.getLogger(getClass());
+	private static final Logger logger = LoggerFactory.getLogger(PoiExcelRecordSheet.class);
 
 	private boolean exists;
 
@@ -27,8 +29,8 @@ public class PoiExcelRecordSheet extends PoiExcelRecord {
 
 	@Override
 	protected void logStartEnd(String part) {
-		if (log.isDebugEnabled()) {
-			log.debug("sheet({}) {}", getSheet().getSheetName(), part);
+		if (logger.isDebugEnabled()) {
+			logger.debug("sheet({}) {}", getSheet().getSheetName(), part);
 		}
 	}
 

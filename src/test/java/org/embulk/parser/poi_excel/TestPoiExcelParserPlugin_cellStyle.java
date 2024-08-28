@@ -9,10 +9,10 @@ import java.text.ParseException;
 import java.util.Arrays;
 import java.util.List;
 
+import com.hishidama.embulk.tester.EmbulkPluginTester;
+import com.hishidama.embulk.tester.EmbulkTestOutputPlugin;
+import com.hishidama.embulk.tester.EmbulkTestParserConfig;
 import org.apache.poi.ss.usermodel.BorderStyle;
-import org.embulk.parser.EmbulkPluginTester;
-import org.embulk.parser.EmbulkTestOutputPlugin.OutputRecord;
-import org.embulk.parser.EmbulkTestParserConfig;
 import org.junit.experimental.theories.DataPoints;
 import org.junit.experimental.theories.Theories;
 import org.junit.experimental.theories.Theory;
@@ -41,7 +41,7 @@ public class TestPoiExcelParserPlugin_cellStyle {
 			parser.addColumn("border-all", "long").set("value", "cell_style.border");
 
 			URL inFile = getClass().getResource(excelFile);
-			List<OutputRecord> result = tester.runParser(inFile, parser);
+			List<EmbulkTestOutputPlugin.OutputRecord> result = tester.runParser(inFile, parser);
 
 			assertThat(result.size(), is(5));
 			check1(result, 0, "red", 255, 0, 0, "top", BorderStyle.THIN.getCode(), 0, 0, 0);
@@ -52,9 +52,9 @@ public class TestPoiExcelParserPlugin_cellStyle {
 		}
 	}
 
-	private void check1(List<OutputRecord> result, int index, String colorText, int r, int g, int b, String borderText,
-			long top, long bottom, long left, long right) {
-		OutputRecord record = result.get(index);
+	private void check1(List<EmbulkTestOutputPlugin.OutputRecord> result, int index, String colorText, int r, int g, int b, String borderText,
+						long top, long bottom, long left, long right) {
+		EmbulkTestOutputPlugin.OutputRecord record = result.get(index);
 		// System.out.println(record);
 		assertThat(record.getAsString("color-text"), is(colorText));
 		assertThat(record.getAsString("color"), is(String.format("%02x%02x%02x", r, g, b)));
@@ -78,7 +78,7 @@ public class TestPoiExcelParserPlugin_cellStyle {
 			parser.addColumn("border-style", "string").set("column_number", "B").set("value", "cell_style");
 
 			URL inFile = getClass().getResource(excelFile);
-			List<OutputRecord> result = tester.runParser(inFile, parser);
+			List<EmbulkTestOutputPlugin.OutputRecord> result = tester.runParser(inFile, parser);
 
 			assertThat(result.size(), is(5));
 			check2(result, 0, "red", 255, 0, 0, "top", BorderStyle.THIN.getCode(), 0, 0, 0);
@@ -89,9 +89,9 @@ public class TestPoiExcelParserPlugin_cellStyle {
 		}
 	}
 
-	private void check2(List<OutputRecord> result, int index, String colorText, int r, int g, int b, String borderText,
-			long top, long bottom, long left, long right) {
-		OutputRecord record = result.get(index);
+	private void check2(List<EmbulkTestOutputPlugin.OutputRecord> result, int index, String colorText, int r, int g, int b, String borderText,
+						long top, long bottom, long left, long right) {
+		EmbulkTestOutputPlugin.OutputRecord record = result.get(index);
 		// System.out.println(record);
 		assertThat(record.getAsString("color-text"), is(colorText));
 		String color = record.getAsString("color-style");
@@ -127,7 +127,7 @@ public class TestPoiExcelParserPlugin_cellStyle {
 					.set("attribute_name", Arrays.asList("border_top", "border_bottom", "border_left", "border_right"));
 
 			URL inFile = getClass().getResource(excelFile);
-			List<OutputRecord> result = tester.runParser(inFile, parser);
+			List<EmbulkTestOutputPlugin.OutputRecord> result = tester.runParser(inFile, parser);
 
 			assertThat(result.size(), is(5));
 			check2(result, 0, "red", 255, 0, 0, "top", BorderStyle.THIN.getCode(), 0, 0, 0);

@@ -6,14 +6,15 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import java.net.URL;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 import java.util.TimeZone;
 
-import org.embulk.parser.EmbulkPluginTester;
-import org.embulk.parser.EmbulkTestOutputPlugin.OutputRecord;
-import org.embulk.parser.EmbulkTestParserConfig;
-import org.embulk.spi.time.Timestamp;
+import com.hishidama.embulk.tester.EmbulkPluginTester;
+import com.hishidama.embulk.tester.EmbulkTestOutputPlugin;
+import com.hishidama.embulk.tester.EmbulkTestParserConfig;
+
 import org.junit.experimental.theories.DataPoints;
 import org.junit.experimental.theories.Theories;
 import org.junit.experimental.theories.Theory;
@@ -26,14 +27,15 @@ public class TestPoiExcelParserPlugin {
 	public static String[] FILES = { "test1.xls", "test2.xlsx" };
 
 	@Theory
-	public void test1(String excelFile) throws ParseException {
+	public void test(String excelFile) throws ParseException {
 		try (EmbulkPluginTester tester = new EmbulkPluginTester()) {
+			// register test target plugin class
 			tester.addParserPlugin(PoiExcelParserPlugin.TYPE, PoiExcelParserPlugin.class);
 
 			EmbulkTestParserConfig parser = tester.newParserConfig(PoiExcelParserPlugin.TYPE);
 			parser.set("sheets", Arrays.asList("test1"));
 			parser.set("skip_header_lines", 1);
-			parser.set("default_timezone", "Asia/Tokyo");
+			parser.set("default_timezone", "Europe/Helsinki");
 			parser.addColumn("boolean", "boolean");
 			parser.addColumn("long", "long");
 			parser.addColumn("double", "double");
@@ -41,7 +43,7 @@ public class TestPoiExcelParserPlugin {
 			parser.addColumn("timestamp", "timestamp").set("format", "%Y/%m/%d");
 
 			URL inFile = getClass().getResource(excelFile);
-			List<OutputRecord> result = tester.runParser(inFile, parser);
+			List<EmbulkTestOutputPlugin.OutputRecord> result = tester.runParser(inFile, parser);
 
 			assertThat(result.size(), is(7));
 			check1(result, 0, true, 123L, 123.4d, "abc", "2015/10/4");
@@ -57,14 +59,13 @@ public class TestPoiExcelParserPlugin {
 	private SimpleDateFormat sdf;
 	{
 		sdf = new SimpleDateFormat("yyyy/MM/dd");
-		sdf.setTimeZone(TimeZone.getTimeZone("Asia/Tokyo"));
+		sdf.setTimeZone(TimeZone.getTimeZone("Europe/Helsinki"));
 	}
 
-	private void check1(List<OutputRecord> result, int index, Boolean b, Long l, Double d, String s, String t)
-			throws ParseException {
-		Timestamp timestamp = (t != null) ? Timestamp.ofEpochMilli(sdf.parse(t).getTime()) : null;
+	private void check1(List<EmbulkTestOutputPlugin.OutputRecord> result, int index, Boolean b, Long l, Double d, String s, String t) throws ParseException {
+		Instant timestamp = (t != null) ? Instant.ofEpochMilli(sdf.parse(t).getTime()) : null;
 
-		OutputRecord r = result.get(index);
+		EmbulkTestOutputPlugin.OutputRecord r = result.get(index);
 		// System.out.println(r);
 		assertThat(r.getAsBoolean("boolean"), is(b));
 		assertThat(r.getAsLong("long"), is(l));
@@ -74,7 +75,7 @@ public class TestPoiExcelParserPlugin {
 	}
 
 	@Theory
-	public void testNumricFormat(String excelFile) throws ParseException {
+	public void testNumericFormat(String excelFile) throws ParseException {
 		try (EmbulkPluginTester tester = new EmbulkPluginTester()) {
 			tester.addParserPlugin(PoiExcelParserPlugin.TYPE, PoiExcelParserPlugin.class);
 
@@ -84,17 +85,17 @@ public class TestPoiExcelParserPlugin {
 			parser.addColumn("value", "string").set("column_number", "C").set("numeric_format", "%.2f");
 
 			URL inFile = getClass().getResource(excelFile);
-			List<OutputRecord> result = tester.runParser(inFile, parser);
+			List<EmbulkTestOutputPlugin.OutputRecord> result = tester.runParser(inFile, parser);
 
 			assertThat(result.size(), is(7));
-			checkNumricFormat(result, 0, "123.40");
-			checkNumricFormat(result, 1, "456.70");
-			checkNumricFormat(result, 2, "123.00");
+			checkNumericFormat(result, 0, "123,40");
+			checkNumericFormat(result, 1, "456,70");
+			checkNumericFormat(result, 2, "123,00");
 		}
 	}
 
-	private void checkNumricFormat(List<OutputRecord> result, int index, String s) {
-		OutputRecord r = result.get(index);
+	private void checkNumericFormat(List<EmbulkTestOutputPlugin.OutputRecord> result, int index, String s) {
+		EmbulkTestOutputPlugin.OutputRecord r = result.get(index);
 		// System.out.println(r);
 		assertThat(r.getAsString("value"), is(s));
 	}
@@ -115,7 +116,7 @@ public class TestPoiExcelParserPlugin {
 			parser.addColumn("col-s", "string").set("value", "column_number");
 
 			URL inFile = getClass().getResource(excelFile);
-			List<OutputRecord> result = tester.runParser(inFile, parser);
+			List<EmbulkTestOutputPlugin.OutputRecord> result = tester.runParser(inFile, parser);
 
 			assertThat(result.size(), is(7));
 			check4(result, 0, "test1", true);
@@ -128,8 +129,8 @@ public class TestPoiExcelParserPlugin {
 		}
 	}
 
-	private void check4(List<OutputRecord> result, int index, String sheetName, Boolean b) {
-		OutputRecord r = result.get(index);
+	private void check4(List<EmbulkTestOutputPlugin.OutputRecord> result, int index, String sheetName, Boolean b) {
+		EmbulkTestOutputPlugin.OutputRecord r = result.get(index);
 		// System.out.println(r);
 		assertThat(r.getAsString("sheet"), is(sheetName));
 		assertThat(r.getAsLong("sheet-n"), is(0L));
@@ -149,7 +150,7 @@ public class TestPoiExcelParserPlugin {
 			parser.addColumn("a", "string");
 
 			URL inFile = getClass().getResource(excelFile);
-			List<OutputRecord> result = tester.runParser(inFile, parser);
+			List<EmbulkTestOutputPlugin.OutputRecord> result = tester.runParser(inFile, parser);
 
 			assertThat(result.size(), is(2 + 4));
 			assertThat(result.get(0).getAsString("a"), is("boolean"));
@@ -158,4 +159,5 @@ public class TestPoiExcelParserPlugin {
 			assertThat(result.get(3).getAsString("a"), is("data"));
 		}
 	}
+
 }

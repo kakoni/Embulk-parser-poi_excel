@@ -1,17 +1,24 @@
 package org.embulk.parser.poi_excel.visitor.embulk;
 
+import java.time.Instant;
 import java.util.Date;
-import java.util.TimeZone;
 
 import org.apache.poi.ss.usermodel.DateUtil;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.embulk.parser.poi_excel.PoiExcelParserPlugin.PluginTask;
 import org.embulk.parser.poi_excel.visitor.PoiExcelVisitorValue;
 import org.embulk.spi.Column;
-import org.embulk.spi.time.Timestamp;
-import org.embulk.spi.time.TimestampParseException;
-import org.embulk.spi.time.TimestampParser;
-import org.embulk.spi.util.Timestamps;
+import org.embulk.spi.type.TimestampType;
+import org.embulk.util.config.Config;
+import org.embulk.util.config.ConfigDefault;
+import org.embulk.util.config.Task;
+import org.embulk.util.config.units.ColumnConfig;
+import org.embulk.util.config.units.SchemaConfig;
+import org.embulk.util.timestamp.TimestampFormatter;
+import java.time.format.DateTimeParseException;
+import java.util.Optional;
+
+import static org.embulk.parser.poi_excel.PoiExcelParserPlugin.getConfigMapper;
 
 public class TimestampCellVisitor extends CellVisitor {
 
@@ -21,24 +28,23 @@ public class TimestampCellVisitor extends CellVisitor {
 
 	@Override
 	public void visitCellValueNumeric(Column column, Object source, double value) {
-		TimestampParser parser = getTimestampParser(column);
-		TimeZone tz = parser.getDefaultTimeZone().toTimeZone();
-		Date date = DateUtil.getJavaDate(value, tz);
-		Timestamp t = Timestamp.ofEpochMilli(date.getTime());
-		pageBuilder.setTimestamp(column, t);
+		Date date = DateUtil.getJavaDate(value);
+		Instant instant = date.toInstant();
+		pageBuilder.setTimestamp(column, instant);
 	}
 
 	@Override
 	public void visitCellValueString(Column column, Object source, String value) {
-		Timestamp t;
+		Instant instant;
 		try {
-			TimestampParser parser = getTimestampParser(column);
-			t = parser.parse(value);
-		} catch (TimestampParseException e) {
+			TimestampFormatter formatter = getTimestampFormatter(column);
+            instant = formatter.parse(value);
+		} catch (DateTimeParseException e) {
 			doConvertError(column, value, e);
 			return;
 		}
-		pageBuilder.setTimestamp(column, t);
+
+		pageBuilder.setTimestamp(column, instant);
 	}
 
 	@Override
@@ -55,7 +61,7 @@ public class TimestampCellVisitor extends CellVisitor {
 
 	@Override
 	public void visitValueLong(Column column, Object source, long value) {
-		pageBuilder.setTimestamp(column, Timestamp.ofEpochMilli(value));
+		pageBuilder.setTimestamp(column, Instant.ofEpochMilli(value));
 	}
 
 	@Override
@@ -84,17 +90,49 @@ public class TimestampCellVisitor extends CellVisitor {
 
 	@Override
 	protected void doConvertErrorConstant(Column column, String value) throws Exception {
-		TimestampParser parser = getTimestampParser(column);
-		pageBuilder.setTimestamp(column, parser.parse(value));
+		TimestampFormatter formatter = getTimestampFormatter(column);
+		pageBuilder.setTimestamp(column, formatter.parse(value));
 	}
 
-	private TimestampParser[] timestampParsers;
+	private TimestampFormatter[] timestampFormatters;
 
-	protected final TimestampParser getTimestampParser(Column column) {
-		if (timestampParsers == null) {
+	protected final TimestampFormatter getTimestampFormatter(Column column) {
+		if (timestampFormatters == null) {
 			PluginTask task = visitorValue.getPluginTask();
-			timestampParsers = Timestamps.newTimestampColumnParsers(task, task.getColumns());
+			timestampFormatters = newTimestampColumnFormattersForParsing(task, task.getColumns());
 		}
-		return timestampParsers[column.getIndex()];
+		return timestampFormatters[column.getIndex()];
+	}
+
+	public static TimestampFormatter[] newTimestampColumnFormattersForParsing(final PluginTask task, final SchemaConfig schema) {
+		final TimestampFormatter[] formatters = new TimestampFormatter[schema.getColumnCount()];
+		int i = 0;
+		for (final ColumnConfig column : schema.getColumns()) {
+			if (column.getType() instanceof TimestampType) {
+				final TimestampColumnOptionForParsing columnOption = getConfigMapper().map(column.getOption(), TimestampColumnOptionForParsing.class);
+
+				final String pattern = columnOption.getFormat().orElse(task.getDefaultTimestampFormat());
+				formatters[i] = TimestampFormatter.builder(pattern, true)
+						.setDefaultZoneFromString(columnOption.getTimeZoneId().orElse(task.getDefaultTimeZoneId()))
+						.setDefaultDateFromString(columnOption.getDate().orElse(task.getDefaultDate()))
+						.build();
+			}
+			i++;
+		}
+		return formatters;
+	}
+
+	private interface TimestampColumnOptionForParsing extends Task {
+		@Config("timezone")
+		@ConfigDefault("null")
+		Optional<String> getTimeZoneId();
+
+		@Config("format")
+		@ConfigDefault("null")
+		Optional<String> getFormat();
+
+		@Config("date")
+		@ConfigDefault("null")
+		Optional<String> getDate();
 	}
 }

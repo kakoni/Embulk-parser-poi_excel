@@ -7,13 +7,14 @@ import static org.junit.Assert.fail;
 
 import java.net.URL;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
 import java.util.List;
 
+import com.hishidama.embulk.tester.EmbulkPluginTester;
+import com.hishidama.embulk.tester.EmbulkTestOutputPlugin;
+import com.hishidama.embulk.tester.EmbulkTestParserConfig;
 import org.apache.poi.ss.usermodel.FormulaError;
-import org.embulk.parser.EmbulkPluginTester;
-import org.embulk.parser.EmbulkTestOutputPlugin.OutputRecord;
-import org.embulk.parser.EmbulkTestParserConfig;
-import org.embulk.spi.time.Timestamp;
+
 import org.junit.experimental.theories.DataPoints;
 import org.junit.experimental.theories.Theories;
 import org.junit.experimental.theories.Theory;
@@ -40,10 +41,10 @@ public class TestPoiExcelParserPlugin_cellError {
 			parser.addColumn("t", "timestamp").set("column_number", "A");
 
 			URL inFile = getClass().getResource(excelFile);
-			List<OutputRecord> result = tester.runParser(inFile, parser);
+			List<EmbulkTestOutputPlugin.OutputRecord> result = tester.runParser(inFile, parser);
 
 			assertThat(result.size(), is(1));
-			OutputRecord r = result.get(0);
+			EmbulkTestOutputPlugin.OutputRecord r = result.get(0);
 			assertThat(r.getAsBoolean("b"), is(nullValue()));
 			assertThat(r.getAsLong("l"), is(nullValue()));
 			assertThat(r.getAsDouble("d"), is(nullValue()));
@@ -67,9 +68,9 @@ public class TestPoiExcelParserPlugin_cellError {
 			parser.addColumn("s", "string").set("column_number", "A");
 
 			URL inFile = getClass().getResource(excelFile);
-			List<OutputRecord> result = tester.runParser(inFile, parser);
+			List<EmbulkTestOutputPlugin.OutputRecord> result = tester.runParser(inFile, parser);
 
-			OutputRecord r = result.get(0);
+			EmbulkTestOutputPlugin.OutputRecord r = result.get(0);
 			assertThat(r.getAsBoolean("b"), is(nullValue()));
 			assertThat(r.getAsLong("l"), is((long) FormulaError.DIV0.getCode()));
 			assertThat(r.getAsDouble("d"), is((double) FormulaError.DIV0.getCode()));
@@ -93,10 +94,10 @@ public class TestPoiExcelParserPlugin_cellError {
 			parser.addColumn("t", "timestamp").set("column_number", "A");
 
 			URL inFile = getClass().getResource(excelFile);
-			List<OutputRecord> result = tester.runParser(inFile, parser);
+			List<EmbulkTestOutputPlugin.OutputRecord> result = tester.runParser(inFile, parser);
 
 			assertThat(result.size(), is(1));
-			OutputRecord r = result.get(0);
+			EmbulkTestOutputPlugin.OutputRecord r = result.get(0);
 			assertThat(r.getAsBoolean("b"), is(nullValue()));
 			assertThat(r.getAsLong("l"), is(nullValue()));
 			assertThat(r.getAsDouble("d"), is(nullValue()));
@@ -120,10 +121,10 @@ public class TestPoiExcelParserPlugin_cellError {
 			parser.addColumn("s4", "string").set("column_number", "A").set("on_cell_error", "constant. ");
 
 			URL inFile = getClass().getResource(excelFile);
-			List<OutputRecord> result = tester.runParser(inFile, parser);
+			List<EmbulkTestOutputPlugin.OutputRecord> result = tester.runParser(inFile, parser);
 
 			assertThat(result.size(), is(1));
-			OutputRecord r = result.get(0);
+			EmbulkTestOutputPlugin.OutputRecord r = result.get(0);
 			assertThat(r.getAsString("s1"), is("zzz"));
 			assertThat(r.getAsString("s2"), is(nullValue()));
 			assertThat(r.getAsString("s3"), is(""));
@@ -148,15 +149,15 @@ public class TestPoiExcelParserPlugin_cellError {
 					.set("on_cell_error", "constant.2000/1/1");
 
 			URL inFile = getClass().getResource(excelFile);
-			List<OutputRecord> result = tester.runParser(inFile, parser);
+			List<EmbulkTestOutputPlugin.OutputRecord> result = tester.runParser(inFile, parser);
 
-			OutputRecord r = result.get(0);
+			EmbulkTestOutputPlugin.OutputRecord r = result.get(0);
 			assertThat(r.getAsBoolean("b"), is(false));
 			assertThat(r.getAsLong("l"), is(0L));
 			assertThat(r.getAsDouble("d"), is(0d));
 			assertThat(r.getAsString("s"), is("0"));
 			assertThat(r.getAsTimestamp("t"),
-					is(Timestamp.ofEpochMilli(new SimpleDateFormat("yyyy/MM/dd z").parse("2000/01/01 UTC").getTime())));
+					is(Instant.ofEpochMilli(new SimpleDateFormat("yyyy/MM/dd z").parse("2000/01/01 UTC").getTime())));
 		}
 	}
 

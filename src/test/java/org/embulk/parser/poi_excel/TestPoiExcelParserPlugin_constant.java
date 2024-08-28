@@ -8,9 +8,9 @@ import java.net.URL;
 import java.text.ParseException;
 import java.util.List;
 
-import org.embulk.parser.EmbulkPluginTester;
-import org.embulk.parser.EmbulkTestOutputPlugin.OutputRecord;
-import org.embulk.parser.EmbulkTestParserConfig;
+import com.hishidama.embulk.tester.EmbulkPluginTester;
+import com.hishidama.embulk.tester.EmbulkTestOutputPlugin;
+import com.hishidama.embulk.tester.EmbulkTestParserConfig;
 import org.junit.experimental.theories.DataPoints;
 import org.junit.experimental.theories.Theories;
 import org.junit.experimental.theories.Theory;
@@ -37,7 +37,7 @@ public class TestPoiExcelParserPlugin_constant {
 			parser.addColumn("cell", "string");
 
 			URL inFile = getClass().getResource(excelFile);
-			List<OutputRecord> result = tester.runParser(inFile, parser);
+			List<EmbulkTestOutputPlugin.OutputRecord> result = tester.runParser(inFile, parser);
 
 			assertThat(result.size(), is(5));
 			check(result, 0, "red");
@@ -48,8 +48,8 @@ public class TestPoiExcelParserPlugin_constant {
 		}
 	}
 
-	private void check(List<OutputRecord> result, int index, String s) throws ParseException {
-		OutputRecord r = result.get(index);
+	private void check(List<EmbulkTestOutputPlugin.OutputRecord> result, int index, String s) throws ParseException {
+		EmbulkTestOutputPlugin.OutputRecord r = result.get(index);
 		// System.out.println(r);
 		assertThat(r.getAsString("const-s"), is("zzz"));
 		assertThat(r.getAsLong("const-n"), is(-1L));

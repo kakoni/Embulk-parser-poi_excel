@@ -10,9 +10,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.embulk.parser.EmbulkPluginTester;
-import org.embulk.parser.EmbulkTestOutputPlugin.OutputRecord;
-import org.embulk.parser.EmbulkTestParserConfig;
+import com.hishidama.embulk.tester.EmbulkPluginTester;
+import com.hishidama.embulk.tester.EmbulkTestOutputPlugin;
+import com.hishidama.embulk.tester.EmbulkTestParserConfig;
 import org.junit.experimental.theories.DataPoints;
 import org.junit.experimental.theories.Theories;
 import org.junit.experimental.theories.Theory;
@@ -63,7 +63,7 @@ public class TestPoiExcelParserPlugin_sheets {
 			parser.set("sheet_options", sheetOptions);
 
 			URL inFile = getClass().getResource(excelFile);
-			List<OutputRecord> result = tester.runParser(inFile, parser);
+			List<EmbulkTestOutputPlugin.OutputRecord> result = tester.runParser(inFile, parser);
 
 			assertThat(result.size(), is(8));
 			check1(result, 0, "abc", 123L);
@@ -83,8 +83,8 @@ public class TestPoiExcelParserPlugin_sheets {
 		return map;
 	}
 
-	private void check1(List<OutputRecord> result, int index, String text, Long number) {
-		OutputRecord record = result.get(index);
+	private void check1(List<EmbulkTestOutputPlugin.OutputRecord> result, int index, String text, Long number) {
+		EmbulkTestOutputPlugin.OutputRecord record = result.get(index);
 		// System.out.println(record);
 		assertThat(record.getAsString("text"), is(text));
 		assertThat(record.getAsLong("number"), is(number));
@@ -100,9 +100,9 @@ public class TestPoiExcelParserPlugin_sheets {
 			parser.addColumn("name", "string").set("value", "sheet_name");
 
 			URL inFile = getClass().getResource(excelFile);
-			List<OutputRecord> result = tester.runParser(inFile, parser);
+			List<EmbulkTestOutputPlugin.OutputRecord> result = tester.runParser(inFile, parser);
 
-			OutputRecord record = result.get(0);
+			EmbulkTestOutputPlugin.OutputRecord record = result.get(0);
 			assertThat(record.getAsString("name"), is("test1"));
 		}
 	}
@@ -117,9 +117,9 @@ public class TestPoiExcelParserPlugin_sheets {
 			parser.addColumn("name", "string").set("value", "sheet_name");
 
 			URL inFile = getClass().getResource(excelFile);
-			List<OutputRecord> result = tester.runParser(inFile, parser);
+			List<EmbulkTestOutputPlugin.OutputRecord> result = tester.runParser(inFile, parser);
 
-			OutputRecord record = result.get(0);
+			EmbulkTestOutputPlugin.OutputRecord record = result.get(0);
 			assertThat(record.getAsString("name"), is("test1"));
 		}
 	}

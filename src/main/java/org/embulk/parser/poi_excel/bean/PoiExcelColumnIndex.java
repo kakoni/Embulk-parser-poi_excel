@@ -4,22 +4,23 @@ import java.text.MessageFormat;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.apache.poi.ss.util.CellReference;
 import org.embulk.parser.poi_excel.PoiExcelColumnValueType;
 import org.embulk.parser.poi_excel.PoiExcelParserPlugin.ColumnOptionTask;
 import org.embulk.parser.poi_excel.PoiExcelParserPlugin.PluginTask;
+import org.embulk.parser.poi_excel.bean.record.PoiExcelRecordRow;
 import org.embulk.parser.poi_excel.bean.record.RecordType;
 import org.embulk.parser.poi_excel.bean.util.PoiExcelCellAddress;
 import org.embulk.spi.Column;
 import org.embulk.spi.Exec;
 import org.embulk.spi.Schema;
 import org.slf4j.Logger;
-
-import com.google.common.base.Optional;
+import org.slf4j.LoggerFactory;
 
 public class PoiExcelColumnIndex {
-	private final Logger log = Exec.getLogger(getClass());
+	private static final Logger logger = LoggerFactory.getLogger(PoiExcelColumnIndex.class);
 
 	protected final RecordType recordType;
 	protected final Map<String, Integer> indexMap = new LinkedHashMap<>();
@@ -29,7 +30,7 @@ public class PoiExcelColumnIndex {
 	}
 
 	public void initializeColumnIndex(PluginTask task, List<PoiExcelColumnBean> beanList) {
-		log.info("record_type={}", recordType);
+		logger.info("record_type={}", recordType);
 
 		int index = -1;
 		indexMap.clear();
@@ -51,7 +52,7 @@ public class PoiExcelColumnIndex {
 
 			initializeCellAddress2(column, bean, index);
 
-			if (log.isInfoEnabled()) {
+			if (logger.isInfoEnabled()) {
 				logColumn(column, bean, valueType, index);
 			}
 		}
@@ -72,8 +73,8 @@ public class PoiExcelColumnIndex {
 		}
 
 		if (recordType == RecordType.SHEET) {
-			String rowNumber = rowOption.or("1");
-			String colNumber = colOption.or("A");
+			String rowNumber = rowOption.orElse("1");
+			String colNumber = colOption.orElse("A");
 			initializeCellAddress(column, bean, rowNumber, colNumber);
 			return;
 		}
@@ -265,47 +266,47 @@ public class PoiExcelColumnIndex {
 		case CELL_FORMULA:
 		case CELL_TYPE:
 		case CELL_CACHED_TYPE:
-			log.info("column.name={} <- {}={}, value={}", column.getName(), cname, cvalue, valueType);
+			logger.info("column.name={} <- {}={}, value={}", column.getName(), cname, cvalue, valueType);
 			break;
 		case CELL_STYLE:
 		case CELL_FONT:
 		case CELL_COMMENT:
 			String suffix = bean.getValueTypeSuffix();
 			if (suffix != null) {
-				log.info("column.name={} <- {}={}, value={}[{}]", column.getName(), cname, cvalue, valueType, suffix);
+				logger.info("column.name={} <- {}={}, value={}[{}]", column.getName(), cname, cvalue, valueType, suffix);
 			} else {
-				log.info("column.name={} <- {}={}, value={}", column.getName(), cname, cvalue, valueType);
+				logger.info("column.name={} <- {}={}, value={}", column.getName(), cname, cvalue, valueType);
 			}
 			break;
 
 		case SHEET_NAME:
 			if (cellAddress != null && cellAddress.getSheetName() != null) {
-				log.info("column.name={} <- {}={}, value={}", column.getName(), cname, cvalue, valueType);
+				logger.info("column.name={} <- {}={}, value={}", column.getName(), cname, cvalue, valueType);
 			} else {
-				log.info("column.name={} <- value={}", column.getName(), valueType);
+				logger.info("column.name={} <- value={}", column.getName(), valueType);
 			}
 			break;
 		case ROW_NUMBER:
 			if (cellAddress != null || cname.equals(OPTION_NAME_CELL_ROW)) {
-				log.info("column.name={} <- {}={}, value={}", column.getName(), cname, cvalue, valueType);
+				logger.info("column.name={} <- {}={}, value={}", column.getName(), cname, cvalue, valueType);
 			} else {
-				log.info("column.name={} <- value={}", column.getName(), valueType);
+				logger.info("column.name={} <- value={}", column.getName(), valueType);
 			}
 			break;
 		case COLUMN_NUMBER:
 			if (cellAddress != null || cname.equals(OPTION_NAME_CELL_COLUMN)) {
-				log.info("column.name={} <- {}={}, value={}", column.getName(), cname, cvalue, valueType);
+				logger.info("column.name={} <- {}={}, value={}", column.getName(), cname, cvalue, valueType);
 			} else {
-				log.info("column.name={} <- value={}", column.getName(), valueType);
+				logger.info("column.name={} <- value={}", column.getName(), valueType);
 			}
 			break;
 
 		case CONSTANT:
 			String value = bean.getValueTypeSuffix();
 			if (value != null) {
-				log.info("column.name={} <- value={}[{}]", column.getName(), valueType, value);
+				logger.info("column.name={} <- value={}[{}]", column.getName(), valueType, value);
 			} else {
-				log.info("column.name={} <- value={}({})", column.getName(), valueType, value);
+				logger.info("column.name={} <- value={}({})", column.getName(), valueType, value);
 			}
 			break;
 		}

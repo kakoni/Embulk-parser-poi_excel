@@ -7,82 +7,99 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
+import java.util.Optional;
 
 import org.apache.poi.EncryptedDocumentException;
-import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
-import org.embulk.config.Config;
-import org.embulk.config.ConfigDefault;
+
 import org.embulk.config.ConfigException;
 import org.embulk.config.ConfigSource;
-import org.embulk.config.Task;
 import org.embulk.config.TaskSource;
+import org.embulk.util.config.*;
+import org.embulk.spi.*;
+
+import org.embulk.util.file.FileInputInputStream;
+
 import org.embulk.parser.poi_excel.bean.PoiExcelSheetBean;
 import org.embulk.parser.poi_excel.bean.record.PoiExcelRecord;
 import org.embulk.parser.poi_excel.visitor.PoiExcelColumnVisitor;
 import org.embulk.parser.poi_excel.visitor.PoiExcelVisitorFactory;
 import org.embulk.parser.poi_excel.visitor.PoiExcelVisitorValue;
-import org.embulk.spi.Exec;
-import org.embulk.spi.FileInput;
-import org.embulk.spi.PageBuilder;
-import org.embulk.spi.PageOutput;
-import org.embulk.spi.ParserPlugin;
-import org.embulk.spi.Schema;
-import org.embulk.spi.SchemaConfig;
-import org.embulk.spi.time.TimestampParser;
-import org.embulk.spi.util.FileInputInputStream;
+import org.embulk.util.config.units.SchemaConfig;
 import org.slf4j.Logger;
-
-import com.google.common.base.Optional;
+import org.slf4j.LoggerFactory;
 
 public class PoiExcelParserPlugin implements ParserPlugin {
-	private final Logger log = Exec.getLogger(getClass());
+
+	private static final Logger logger = LoggerFactory.getLogger(PoiExcelParserPlugin.class);
+	private static final ConfigMapperFactory CONFIG_MAPPER_FACTORY = ConfigMapperFactory.builder().addDefaultModules().build();
+	private static final ConfigMapper CONFIG_MAPPER = CONFIG_MAPPER_FACTORY.createConfigMapper();
+	private static final TaskMapper TASK_MAPPER = CONFIG_MAPPER_FACTORY.createTaskMapper();
+
+	public static ConfigMapper getConfigMapper() {
+		return CONFIG_MAPPER;
+	}
 
 	public static final String TYPE = "poi_excel";
 
-	public interface PluginTask extends Task, TimestampParser.Task, SheetCommonOptionTask {
+	public interface PluginTask extends Task, SheetCommonOptionTask {
 		@Config("sheet")
 		@ConfigDefault("null")
-		public Optional<String> getSheet();
+		Optional<String> getSheet();
 
 		@Config("sheets")
 		@ConfigDefault("[]")
-		public List<String> getSheets();
+		List<String> getSheets();
 
 		@Config("ignore_sheet_not_found")
 		@ConfigDefault("false")
-		public boolean getIgnoreSheetNotFound();
+		boolean getIgnoreSheetNotFound();
 
 		@Config("sheet_options")
 		@ConfigDefault("{}")
-		public Map<String, SheetOptionTask> getSheetOptions();
+		Map<String, SheetOptionTask> getSheetOptions();
 
 		@Config("columns")
-		public SchemaConfig getColumns();
+		SchemaConfig getColumns();
 
 		@Config("flush_count")
 		@ConfigDefault("100")
-		public int getFlushCount();
+		int getFlushCount();
+
+		// From org.embulk.spi.time.TimestampParser.Task.
+		@Config("default_timezone")
+		@ConfigDefault("\"UTC\"")
+		String getDefaultTimeZoneId();
+
+		// From org.embulk.spi.time.TimestampParser.Task.
+		@Config("default_timestamp_format")
+		@ConfigDefault("\"%Y-%m-%d %H:%M:%S.%N %z\"")
+		String getDefaultTimestampFormat();
+
+		// From org.embulk.spi.time.TimestampParser.Task.
+		@Config("default_date")
+		@ConfigDefault("\"1970-01-01\"")
+		String getDefaultDate();
 	}
 
 	public interface SheetCommonOptionTask extends Task, ColumnCommonOptionTask {
 
 		@Config("record_type")
 		@ConfigDefault("null")
-		public Optional<String> getRecordType();
+        Optional<String> getRecordType();
 
 		@Config("skip_header_lines")
 		@ConfigDefault("null")
-		public Optional<Integer> getSkipHeaderLines();
+		Optional<Integer> getSkipHeaderLines();
 	}
 
 	public interface SheetOptionTask extends Task, SheetCommonOptionTask {
 
 		@Config("columns")
 		@ConfigDefault("null")
-		public Optional<Map<String, ColumnOptionTask>> getColumns();
+		Optional<Map<String, ColumnOptionTask>> getColumns();
 	}
 
 	public interface ColumnOptionTask extends Task, ColumnCommonOptionTask {
@@ -93,84 +110,84 @@ public class PoiExcelParserPlugin implements ParserPlugin {
 		 */
 		@Config("value")
 		@ConfigDefault("null")
-		public Optional<String> getValueType();
+		Optional<String> getValueType();
 
 		// same as cell_column
 		@Config("column_number")
 		@ConfigDefault("null")
-		public Optional<String> getColumnNumber();
+		Optional<String> getColumnNumber();
 
-		public static final String CELL_COLUMN = "cell_column";
+		String CELL_COLUMN = "cell_column";
 
 		// A,B,... or number(1 origin)
 		@Config(CELL_COLUMN)
 		@ConfigDefault("null")
-		public Optional<String> getCellColumn();
+		Optional<String> getCellColumn();
 
-		public static final String CELL_ROW = "cell_row";
+		String CELL_ROW = "cell_row";
 
 		// number(1 origin)
 		@Config(CELL_ROW)
 		@ConfigDefault("null")
-		public Optional<String> getCellRow();
+		Optional<String> getCellRow();
 
 		// A1,B2,... or Sheet1!A1
 		@Config("cell_address")
 		@ConfigDefault("null")
-		public Optional<String> getCellAddress();
+		Optional<String> getCellAddress();
 
 		// use when value_type=cell_style, cell_font, ...
 		@Config("attribute_name")
 		@ConfigDefault("null")
-		public Optional<List<String>> getAttributeName();
+		Optional<List<String>> getAttributeName();
 	}
 
 	public interface ColumnCommonOptionTask extends Task {
 		// format of numeric(double) to string
 		@Config("numeric_format")
 		@ConfigDefault("null")
-		public Optional<String> getNumericFormat();
+		Optional<String> getNumericFormat();
 
 		// search merged cell if cellType=BLANK
 		@Config("search_merged_cell")
 		@ConfigDefault("null")
-		public Optional<String> getSearchMergedCell();
+		Optional<String> getSearchMergedCell();
 
 		@Config("formula_handling")
 		@ConfigDefault("null")
-		public Optional<String> getFormulaHandling();
+		Optional<String> getFormulaHandling();
 
 		@Config("formula_replace")
 		@ConfigDefault("null")
-		public Optional<List<FormulaReplaceTask>> getFormulaReplace();
+        Optional<List<FormulaReplaceTask>> getFormulaReplace();
 
 		@Config("on_evaluate_error")
 		@ConfigDefault("null")
-		public Optional<String> getOnEvaluateError();
+        Optional<String> getOnEvaluateError();
 
 		@Config("on_cell_error")
 		@ConfigDefault("null")
-		public Optional<String> getOnCellError();
+        Optional<String> getOnCellError();
 
 		@Config("on_convert_error")
 		@ConfigDefault("null")
-		public Optional<String> getOnConvertError();
+		Optional<String> getOnConvertError();
 	}
 
 	public interface FormulaReplaceTask extends Task {
 
 		@Config("regex")
-		public String getRegex();
+		String getRegex();
 
 		// replace string
 		// can use variable: "${row}"
 		@Config("to")
-		public String getTo();
+		String getTo();
 	}
 
 	@Override
 	public void transaction(ConfigSource config, ParserPlugin.Control control) {
-		PluginTask task = config.loadConfig(PluginTask.class);
+		final PluginTask task = CONFIG_MAPPER.map(config, PluginTask.class);
 
 		Schema schema = task.getColumns().toSchema();
 
@@ -179,7 +196,7 @@ public class PoiExcelParserPlugin implements ParserPlugin {
 
 	@Override
 	public void run(TaskSource taskSource, Schema schema, FileInput input, PageOutput output) {
-		PluginTask task = taskSource.loadTask(PluginTask.class);
+		final PluginTask task = TASK_MAPPER.map(taskSource, PluginTask.class);
 
 		List<String> sheetNames = new ArrayList<>();
 		Optional<String> sheetOption = task.getSheet();
@@ -201,8 +218,8 @@ public class PoiExcelParserPlugin implements ParserPlugin {
 				}
 
 				List<String> list = resolveSheetName(workbook, sheetNames);
-				if (log.isDebugEnabled()) {
-					log.debug("resolved sheet names={}", list);
+				if (logger.isDebugEnabled()) {
+					logger.debug("resolved sheet names={}", list);
 				}
 				run(task, schema, workbook, list, output);
 			}
@@ -264,14 +281,14 @@ public class PoiExcelParserPlugin implements ParserPlugin {
 				Sheet sheet = workbook.getSheet(sheetName);
 				if (sheet == null) {
 					if (task.getIgnoreSheetNotFound()) {
-						log.info("ignore: not found sheet={}", sheetName);
+						logger.info("ignore: not found sheet={}", sheetName);
 						continue;
 					} else {
 						throw new RuntimeException(String.format("not found sheet=%s", sheetName));
 					}
 				}
 
-				log.info("sheet={}", sheetName);
+				logger.info("sheet={}", sheetName);
 				PoiExcelVisitorFactory factory = newPoiExcelVisitorFactory(task, schema, sheet, pageBuilder);
 				PoiExcelColumnVisitor visitor = factory.getPoiExcelColumnVisitor();
 				PoiExcelSheetBean sheetBean = factory.getVisitorValue().getSheetBean();
@@ -289,7 +306,7 @@ public class PoiExcelParserPlugin implements ParserPlugin {
 					pageBuilder.addRecord();
 
 					if (++count >= flushCount) {
-						log.trace("flush");
+						logger.trace("flush");
 						pageBuilder.flush();
 						count = 0;
 					}

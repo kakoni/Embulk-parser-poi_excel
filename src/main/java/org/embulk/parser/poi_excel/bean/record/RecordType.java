@@ -3,12 +3,11 @@ package org.embulk.parser.poi_excel.bean.record;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import org.embulk.config.ConfigException;
 import org.embulk.parser.poi_excel.PoiExcelParserPlugin.ColumnOptionTask;
 import org.embulk.parser.poi_excel.bean.PoiExcelColumnBean;
-
-import com.google.common.base.Optional;
 
 public enum RecordType {
 	ROW {
@@ -66,7 +65,7 @@ public enum RecordType {
 	SHEET {
 		@Override
 		public Optional<String> getRecordOption(PoiExcelColumnBean bean) {
-			return Optional.absent();
+			return Optional.empty();
 		}
 
 		@Override
@@ -76,7 +75,7 @@ public enum RecordType {
 
 		@Override
 		public Optional<String> getNumberOption(PoiExcelColumnBean bean) {
-			return Optional.absent();
+			return Optional.empty();
 		}
 
 		@Override

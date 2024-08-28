@@ -7,9 +7,9 @@ import java.net.URL;
 import java.text.ParseException;
 import java.util.List;
 
-import org.embulk.parser.EmbulkPluginTester;
-import org.embulk.parser.EmbulkTestOutputPlugin.OutputRecord;
-import org.embulk.parser.EmbulkTestParserConfig;
+import com.hishidama.embulk.tester.EmbulkPluginTester;
+import com.hishidama.embulk.tester.EmbulkTestOutputPlugin;
+import com.hishidama.embulk.tester.EmbulkTestParserConfig;
 import org.junit.experimental.theories.DataPoints;
 import org.junit.experimental.theories.Theories;
 import org.junit.experimental.theories.Theory;
@@ -71,7 +71,7 @@ public class TestPoiExcelParserPlugin_mergedCell {
 			parser.addColumn("b", "string");
 
 			URL inFile = getClass().getResource(excelFile);
-			List<OutputRecord> result = tester.runParser(inFile, parser);
+			List<EmbulkTestOutputPlugin.OutputRecord> result = tester.runParser(inFile, parser);
 
 			assertThat(result.size(), is(4));
 			if (search) {
@@ -85,8 +85,8 @@ public class TestPoiExcelParserPlugin_mergedCell {
 		}
 	}
 
-	private void check6(List<OutputRecord> result, int index, String a, String b) {
-		OutputRecord r = result.get(index);
+	private void check6(List<EmbulkTestOutputPlugin.OutputRecord> result, int index, String a, String b) {
+		EmbulkTestOutputPlugin.OutputRecord r = result.get(index);
 		// System.out.println(r);
 		assertThat(r.getAsString("a"), is(a));
 		assertThat(r.getAsString("b"), is(b));

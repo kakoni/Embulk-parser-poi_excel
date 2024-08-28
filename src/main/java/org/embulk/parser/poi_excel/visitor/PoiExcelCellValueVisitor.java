@@ -22,12 +22,13 @@ import org.embulk.parser.poi_excel.bean.PoiExcelColumnBean.FormulaHandling;
 import org.embulk.parser.poi_excel.visitor.embulk.CellVisitor;
 import org.embulk.parser.poi_excel.visitor.util.MergedRegionFinder;
 import org.embulk.spi.Column;
-import org.embulk.spi.Exec;
 import org.embulk.spi.PageBuilder;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class PoiExcelCellValueVisitor {
-	private final Logger log = Exec.getLogger(getClass());
+
+	private static final Logger logger = LoggerFactory.getLogger(PoiExcelCellValueVisitor.class);
 
 	protected final PoiExcelVisitorValue visitorValue;
 	protected final PageBuilder pageBuilder;
@@ -172,7 +173,7 @@ public class PoiExcelCellValueVisitor {
 			}
 
 			if (!formula.equals(old)) {
-				log.debug("formula replaced. old=\"{}\", new=\"{}\"", old, formula);
+				logger.debug("formula replaced. old=\"{}\", new=\"{}\"", old, formula);
 				try {
 					cell.setCellFormula(formula);
 				} catch (Exception e) {

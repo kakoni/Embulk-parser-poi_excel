@@ -12,12 +12,12 @@ import org.embulk.parser.poi_excel.bean.util.PoiExcelCellAddress;
 import org.embulk.parser.poi_excel.visitor.embulk.CellVisitor;
 import org.embulk.spi.Column;
 import org.embulk.spi.ColumnVisitor;
-import org.embulk.spi.Exec;
 import org.embulk.spi.PageBuilder;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class PoiExcelColumnVisitor implements ColumnVisitor {
-	private final Logger log = Exec.getLogger(getClass());
+	private static final Logger logger = LoggerFactory.getLogger(PoiExcelColumnVisitor.class);
 
 	protected final PoiExcelVisitorValue visitorValue;
 	protected final PageBuilder pageBuilder;
@@ -66,8 +66,8 @@ public class PoiExcelColumnVisitor implements ColumnVisitor {
 	}
 
 		protected final void visitCell0(Column column, CellVisitor visitor) {
-		if (log.isTraceEnabled()) {
-			log.trace("{} start", column);
+		if (logger.isTraceEnabled()) {
+			logger.trace("{} start", column);
 		}
 		try {
 			visitCell(column, visitor);
@@ -77,8 +77,8 @@ public class PoiExcelColumnVisitor implements ColumnVisitor {
 			throw new RuntimeException(MessageFormat.format("error at {0} cell={1}!{2}. {3}", column, sheetName, ref,
 					e.getMessage()), e);
 		}
-		if (log.isTraceEnabled()) {
-			log.trace("{} end", column);
+		if (logger.isTraceEnabled()) {
+			logger.trace("{} end", column);
 		}
 	}
 

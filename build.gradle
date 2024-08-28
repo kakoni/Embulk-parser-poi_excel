@@ -1,116 +1,97 @@
 plugins {
-    id "com.jfrog.bintray" version "1.1"
-    id "com.github.jruby-gradle.base" version "1.5.0"
-    id "com.palantir.git-version" version "0.12.3"
-    id "com.diffplug.spotless" version "6.13.0"
-    id "java"
-    id "eclipse"
-    id "checkstyle"
+    id 'java'
+    id "maven-publish"
+    id "org.embulk.embulk-plugins" version "0.7.0"
 }
-import com.github.jrubygradle.JRubyExec
+
 repositories {
     mavenCentral()
-    jcenter()
 }
+
+// Set your own group ID
+group = "org.embulk"
+
+// Set the description of your plugin.
+description = "Parses Excel files(xls, xlsx) read by other file input plugins."
+
+version = "0.11.1-SNAPSHOT"
+
 configurations {
-    provided
+    // We'd recommend to enable dependency locking so that you are aware of transitive dependencies.
+    // See: https://docs.gradle.org/current/userguide/dependency_locking.html
+    compileClasspath.resolutionStrategy.activateDependencyLocking()
+    runtimeClasspath.resolutionStrategy.activateDependencyLocking()
 }
 
-version = {
-    def vd = versionDetails()
-    if (vd.commitDistance == 0 && vd.lastTag ==~ /^[0-9]+\.[0-9]+\.[0-9]$/) {
-        vd.lastTag
-    } else {
-        "0.0.0.${vd.gitHash}"
-    }
-}()
+tasks.withType(JavaCompile) {
+    options.compilerArgs << "-Xlint:deprecation" << "-Xlint:unchecked"
+    options.encoding = "UTF-8"
+}
 
-sourceCompatibility = 1.7
-targetCompatibility = 1.7
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(11)
+    }
+    // "javadoc" JAR and "sources" JAR are required to publish the plugin to Maven Central.
+    withJavadocJar()
+    withSourcesJar()
+}
 
 dependencies {
-    compile  "org.embulk:embulk-core:0.9.23"
-    provided "org.embulk:embulk-core:0.9.23"
-    compile  "org.embulk:embulk-standards:0.9.23"
-    compile 'org.embulk:embulk-deps-buffer:0.9.23'
-    // compile "YOUR_JAR_DEPENDENCY_GROUP:YOUR_JAR_DEPENDENCY_MODULE:YOUR_JAR_DEPENDENCY_VERSION"
-    compile group: 'org.apache.poi', name : 'poi', version: '5.2.3'
-    compile(group: 'org.apache.poi', name : 'poi-ooxml', version: '5.2.3') {
+    compileOnly "org.embulk:embulk-spi:0.11"
+
+    implementation "org.embulk:embulk-util-config:0.5.0"
+    implementation "org.embulk:embulk-util-file:0.2.0"
+    implementation "org.embulk:embulk-util-timestamp:0.3.0"
+
+    implementation group: 'org.apache.poi', name : 'poi', version: '5.2.3'
+    implementation(group: 'org.apache.poi', name : 'poi-ooxml', version: '5.2.3') {
         exclude group: 'stax', module: 'stax-api'
+    }    
+
+    // The Embulk main packages are often required for testing.
+    testImplementation "junit:junit:4.13.2"
+    testImplementation "org.embulk:embulk-spi:0.11"
+    testImplementation "org.embulk:embulk-core:0.11.0"
+    testImplementation "org.embulk:embulk-deps:0.11.0"
+    testImplementation "org.embulk:embulk-junit4:0.11.0"
+    testImplementation "io.github.hishidama.embulk:hm-embulk-tester:0.1.+" // ★
+}
+
+embulkPlugin {
+    // Set the plugin's main class.
+    mainClass = "org.embulk.input.soap.SoapInputPlugin"
+
+    // Set: "decoder", "encoder", "filter", "formatter", "guess", "input", "output", or "parser"
+    category = "parser"
+
+    // Set the "type" of the Embulk plugin used in Embulk's configuration YAML.
+    // For instance, it would be "example" for "embulk-input-example".
+    type = "poi_excel"
+}
+
+// It would be a good habit to contain the LICENSE file(s) at "META-INF/" in your plugin packages.
+jar {
+    metaInf {
+        from rootProject.file("LICENSE")
     }
-    testCompile "junit:junit:4.+"
-    testCompile 'org.embulk:embulk-test:0.9.23'
-    testCompile "org.embulk:embulk-core:0.9.23:tests"
 }
-
-task classpath(type: Copy, dependsOn: ["jar"]) {
-    doFirst { file("classpath").deleteDir() }
-    from (configurations.runtime - configurations.provided + files(jar.archivePath))
-    into "classpath"
+sourcesJar {
+    metaInf {
+        from rootProject.file("LICENSE")
+    }
 }
-clean { delete "classpath" }
-
-checkstyle {
-    configFile = file("${project.rootDir}/config/checkstyle/checkstyle.xml")
-    toolVersion = '6.14.1'
-}
-checkstyleMain {
-    configFile = file("${project.rootDir}/config/checkstyle/default.xml")
-    ignoreFailures = true
-}
-checkstyleTest {
-    configFile = file("${project.rootDir}/config/checkstyle/default.xml")
-    ignoreFailures = true
-}
-task checkstyle(type: Checkstyle) {
-    classpath = sourceSets.main.output + sourceSets.test.output
-    source = sourceSets.main.allJava + sourceSets.test.allJava
-}
-
-task gem(type: JRubyExec, dependsOn: ["gemspec", "classpath"]) {
-    jrubyArgs "-S"
-    script "gem"
-    scriptArgs "build", "${project.name}.gemspec"
-    doLast { ant.move(file: "${project.name}-${project.version}.gem", todir: "pkg") }
-}
-
-task gemPush(type: JRubyExec, dependsOn: ["gem"]) {
-    jrubyArgs "-S"
-    script "gem"
-    scriptArgs "push", "pkg/${project.name}-${project.version}.gem"
-}
-
-task "package"(dependsOn: ["gemspec", "classpath"]) {
-    doLast {
-        println "> Build succeeded."
-        println "> You can run embulk with '-L ${file(".").absolutePath}' argument."
+javadocJar {
+    metaInf {
+        from rootProject.file("LICENSE")
     }
 }
 
-task gemspec {
-    ext.gemspecFile = file("${project.name}.gemspec")
-    inputs.file "build.gradle"
-    outputs.file gemspecFile
-    doLast { gemspecFile.write($/
-Gem::Specification.new do |spec|
-  spec.name          = "${project.name}"
-  spec.version       = "${project.version}"
-  spec.authors       = ["hishidama"]
-  spec.summary       = %[Apache POI Excel parser plugin for Embulk]
-  spec.description   = %[Parses Excel files(xls, xlsx) read by other file input plugins.]
-  spec.email         = ["hishi.dama@asahi.email.ne.jp"]
-  spec.licenses      = ["MIT"]
-  spec.homepage      = "https://github.com/hishidama/embulk-parser-poi_excel"
-
-  spec.files         = `git ls-files`.split("\n") + Dir["classpath/*.jar"]
-  spec.test_files    = spec.files.grep(%r"^(test|spec)/")
-  spec.require_paths = ["lib"]
-
-  #spec.add_dependency 'YOUR_GEM_DEPENDENCY', ['~> YOUR_GEM_DEPENDENCY_VERSION']
-  spec.add_development_dependency 'bundler', ['~> 1.0']
-  spec.add_development_dependency 'rake', ['>= 10.0']
-end
-/$)
-    }
+gem {
+  authors       = ["hishidama"]
+  summary       = "[Apache POI Excel parser plugin for Embulk]"
+  description   = "[Parses Excel files(xls, xlsx) read by other file input plugins.]"
+  email         = ["hishi.dama@asahi.email.ne.jp"]
+  licenses      = ["MIT"]
+  homepage      = "https://github.com/hishidama/embulk-parser-poi_excel"
 }
-clean { delete "${project.name}.gemspec" }
