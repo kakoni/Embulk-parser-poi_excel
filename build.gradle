@@ -11,7 +11,7 @@ repositories {
 
 group = "org.embulk"
 description = "Parses Excel files(xls, xlsx) read by other file input plugins."
-version = "0.11.1-SNAPSHOT"
+version = "0.1.15-SNAPSHOT"
 
 configurations {
     compileClasspath.resolutionStrategy.activateDependencyLocking()
