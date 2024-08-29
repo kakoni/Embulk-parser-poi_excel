@@ -1,6 +1,7 @@
 plugins {
-    id 'java'
+    id "java"
     id "maven-publish"
+    id "signing"
     id "org.embulk.embulk-plugins" version "0.7.0"
 }
 
@@ -8,17 +9,11 @@ repositories {
     mavenCentral()
 }
 
-// Set your own group ID
 group = "org.embulk"
-
-// Set the description of your plugin.
 description = "Parses Excel files(xls, xlsx) read by other file input plugins."
-
 version = "0.11.1-SNAPSHOT"
 
 configurations {
-    // We'd recommend to enable dependency locking so that you are aware of transitive dependencies.
-    // See: https://docs.gradle.org/current/userguide/dependency_locking.html
     compileClasspath.resolutionStrategy.activateDependencyLocking()
     runtimeClasspath.resolutionStrategy.activateDependencyLocking()
 }
@@ -32,7 +27,7 @@ java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(11)
     }
-    // "javadoc" JAR and "sources" JAR are required to publish the plugin to Maven Central.
+
     withJavadocJar()
     withSourcesJar()
 }
@@ -59,32 +54,105 @@ dependencies {
 }
 
 embulkPlugin {
-    // Set the plugin's main class.
-    mainClass = "org.embulk.input.soap.SoapInputPlugin"
-
-    // Set: "decoder", "encoder", "filter", "formatter", "guess", "input", "output", or "parser"
+    mainClass = "org.embulk.parser.poi_excel.PoiExcelParserPlugin"
     category = "parser"
-
-    // Set the "type" of the Embulk plugin used in Embulk's configuration YAML.
-    // For instance, it would be "example" for "embulk-input-example".
     type = "poi_excel"
 }
 
-// It would be a good habit to contain the LICENSE file(s) at "META-INF/" in your plugin packages.
 jar {
     metaInf {
         from rootProject.file("LICENSE")
     }
 }
+
 sourcesJar {
     metaInf {
         from rootProject.file("LICENSE")
     }
 }
+
 javadocJar {
     metaInf {
         from rootProject.file("LICENSE")
     }
+}
+
+task checkDependencies {
+    notCompatibleWithConfigurationCache("The task \"checkDependencies\" filters configurations at execution time.")
+    doLast {
+        configurations.findAll { it.canBeResolved }.each { it.resolve() }
+    }
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            groupId = project.group
+            artifactId = project.name
+
+            from components.java
+            // javadocJar and sourcesJar are added by java.withJavadocJar() and java.withSourcesJar() above.
+            // See: https://docs.gradle.org/current/javadoc/org/gradle/api/plugins/JavaPluginExtension.html
+
+            pom {  // https://central.sonatype.org/pages/requirements.html
+                packaging "jar"
+
+                name = project.name
+                description = project.description
+                url = 'https://github.com/hishidama/embulk-parser-poi_excel'
+
+                licenses {
+                    license {
+                        // http://central.sonatype.org/pages/requirements.html#license-information
+                        name = "MIT License"
+                        url = "https://opensource.org/licenses/MIT"
+                        distribution = "repo"
+                    }
+                }
+
+                developers {
+                    developer {
+                        id = 'hishidama'
+                        name = 'Hishida Masato'
+                    }
+                }
+
+                scm {
+                    connection = "scm:git:git://github.com/hishidama/embulk-parser-poi_excel.git"
+                    developerConnection = "scm:git:git@github.com:hishidama/embulk-parser-poi_excel.git"
+                    url = "https://github.com/hishidama/embulk-parser-poi_excel"
+                }
+            }
+        }
+    }
+
+    repositories {
+        maven {  // publishMavenPublicationToMavenCentralRepository
+            name = "mavenCentral"
+            if (project.version.endsWith("-SNAPSHOT")) {
+                url "https://oss.sonatype.org/content/repositories/snapshots"
+            } else {
+                url "https://oss.sonatype.org/service/local/staging/deploy/maven2"
+            }
+
+            credentials {
+                username = project.hasProperty("ossrhUsername") ? ossrhUsername : ""
+                password = project.hasProperty("ossrhPassword") ? ossrhPassword : ""
+            }
+        }
+    }
+}
+
+signing {
+    if (project.hasProperty("signingKey") && project.hasProperty("signingPassword")) {
+        logger.lifecycle("Signing with an in-memory key.")
+        useInMemoryPgpKeys(signingKey, signingPassword)
+    }
+    sign publishing.publications.maven
+}
+
+test {
+    maxHeapSize = "2g"
 }
 
 gem {
